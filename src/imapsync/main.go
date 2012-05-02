@@ -14,7 +14,7 @@ import (
 
 var dumpProtocol *bool = flag.Bool("dumpprotocol", false, "dump imap stream")
 
-func check(err os.Error) {
+func check(err error) {
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +118,7 @@ func (ui *UI) fetch(im *imap.IMAP, mailbox string) {
 	ch, err := im.FetchAsync(query, []string{"RFC822"})
 	check(err)
 
-	envelopeDate := time.LocalTime().Format(time.ANSIC)
+	envelopeDate := time.Now().Local().Format(time.ANSIC)
 
 	i := 0
 	total := examine.Exists
@@ -168,7 +168,7 @@ func (ui *UI) runFetch(mailbox string) {
 				overprint = true
 			default:
 				if s != nil {
-					status = s.(os.Error).String()
+					status = s.(error).Error()
 					ui.statusChan = nil
 					ticker.Stop()
 				}

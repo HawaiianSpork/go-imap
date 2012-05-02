@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"io"
 	"sync"
 )
@@ -37,7 +36,7 @@ func (n *netmonReader) Bandwidth() float32 {
 	return val
 }
 
-func (n *netmonReader) Read(buf []byte) (int, os.Error) {
+func (n *netmonReader) Read(buf []byte) (int, error) {
 	nb, err := n.r.Read(buf)
 	n.lock.Lock()
 	n.bucket += nb

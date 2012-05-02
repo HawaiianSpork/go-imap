@@ -1,7 +1,7 @@
 package imap
 
 import (
-	"os"
+	"errors"
 	"strconv"
 	"fmt"
 )
@@ -49,6 +49,10 @@ func (e *IMAPError) String() string {
 	return fmt.Sprintf("imap: %s %s", e.Status, e.Text)
 }
 
+func (e *IMAPError) Error() string {
+	return fmt.Sprintf("imap: %s %s", e.Status, e.Text)
+}
+
 const (
 	WildcardAny          = "%"
 	WildcardAnyRecursive = "*"
@@ -63,7 +67,7 @@ type reader struct {
 }
 
 // Read a full response (e.g. "* OK foobar\r\n").
-func (r *reader) readResponse() (tag, interface{}, os.Error) {
+func (r *reader) readResponse() (tag, interface{}, error) {
 	tag, err := r.readTag()
 	if err != nil {
 		return untagged, nil, err
@@ -88,13 +92,13 @@ func (r *reader) readResponse() (tag, interface{}, os.Error) {
 
 // Read the tag, the first part of the response.
 // Expects either "*" or "a123".
-func (r *reader) readTag() (tag, os.Error) {
+func (r *reader) readTag() (tag, error) {
 	str, err := r.readToken()
 	if err != nil {
 		return untagged, err
 	}
 	if len(str) == 0 {
-		return untagged, os.NewError("read empty tag")
+		return untagged, errors.New("read empty tag")
 	}
 
 	switch str[0] {
@@ -130,10 +134,10 @@ type ResponseUIDNext struct {
 }
 
 // Read a status response, one starting with OK/NO/BAD.
-func (r *reader) readStatus(statusStr string) (resp *ResponseStatus, outErr os.Error) {
+func (r *reader) readStatus(statusStr string) (resp *ResponseStatus, outErr error) {
 	defer func() {
 		if e := recover(); e != nil {
-			if osErr, ok := e.(os.Error); ok {
+			if osErr, ok := e.(error); ok {
 				outErr = osErr
 				return
 			}
@@ -142,7 +146,7 @@ func (r *reader) readStatus(statusStr string) (resp *ResponseStatus, outErr os.E
 	}()
 
 	if len(statusStr) == 0 {
-		var err os.Error
+		var err error
 		statusStr, err = r.readToken()
 		check(err)
 	}
@@ -373,10 +377,10 @@ type ResponseRecent struct {
 	Count int
 }
 
-func (r *reader) readUntagged() (resp interface{}, outErr os.Error) {
+func (r *reader) readUntagged() (resp interface{}, outErr error) {
 	defer func() {
 		if e := recover(); e != nil {
-			if osErr, ok := e.(os.Error); ok {
+			if osErr, ok := e.(error); ok {
 				outErr = osErr
 				return
 			}
